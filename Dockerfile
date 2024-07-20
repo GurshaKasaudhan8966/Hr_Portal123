@@ -1,26 +1,11 @@
-# Stage 1: Build the application with Maven
-FROM maven:latest AS build
+# Use maven to build the project
+FROM maven:3.8.5-openjdk-17 AS build
+COPY . /app
+WORKDIR /app
+RUN mvn clean package -DskipTests
 
-# Install necessary packages
-RUN apt-get update && apt-get install openjdk-17-jdk -y
-
-# Copy the project files to the container
-COPY . .
-
-# Build the application using Gradle
-RUN ./gradlew bootJar --no-daemon
-
-# Verify the JAR file location
-RUN ls -l /target/
-
-# Stage 2: Create the final image
-FROM openjdk:17-jdk-slim
-
-# Expose the application port
+# Use openjdk to run the application
+FROM openjdk:17.0.1-jdk-slim
+COPY --from=build /app/target/jwt-0.0.1-SNAPSHOT.jar HrPortal.jar
 EXPOSE 8080
-
-# Copy the built JAR file from the build stage
-COPY --from=build /target/jwt-0.0.1-SNAPSHOT.jar /app.jar
-
-# Run the application
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "HrPortal.jar"]
